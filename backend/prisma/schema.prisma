@@ -1,0 +1,105 @@
+// Prisma schema – SQLite for local dev, swap provider for PostgreSQL in production
+// Note: SQLite does not support native enums; values are stored as plain strings.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Users & KYC
+// ──────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // KycStatus values: PENDING | SUBMITTED | APPROVED | REJECTED
+  kycStatus      String    @default("PENDING")
+  kycDocType     String?
+  kycDocNumber   String?
+  kycSubmittedAt DateTime?
+  kycReviewedAt  DateTime?
+
+  accounts Account[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Accounts / Wallets
+// ──────────────────────────────────────────────────────────────────────────────
+
+model Account {
+  id        String   @id @default(uuid())
+  userId    String
+  label     String
+  // AccountType values: FIAT | CRYPTO
+  type      String
+  currency  String   // "USD", "EUR", "ETH", "BTC" …
+  balance   String   @default("0") // stored as string to preserve precision
+  address   String?  // crypto on-chain address
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sentTxns     Transaction[] @relation("Sender")
+  receivedTxns Transaction[] @relation("Receiver")
+
+  @@map("accounts")
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Transactions
+// ──────────────────────────────────────────────────────────────────────────────
+
+model Transaction {
+  id            String   @id @default(uuid())
+  // TransactionType values: DEPOSIT | WITHDRAWAL | TRANSFER | EXCHANGE
+  type          String
+  // TransactionStatus values: PENDING | COMPLETED | FAILED | REVERSED
+  status        String   @default("PENDING")
+
+  fromAccountId String?
+  toAccountId   String?
+  fromAccount   Account? @relation("Sender",   fields: [fromAccountId], references: [id])
+  toAccount     Account? @relation("Receiver", fields: [toAccountId],   references: [id])
+
+  amount      String  // amount debited from fromAccount
+  currency    String  // currency of `amount`
+  fee         String  @default("0")
+
+  toAmount     String? // amount credited to toAccount (exchange only)
+  toCurrency   String? // currency of `toAmount`   (exchange only)
+  exchangeRate String? // rate used                (exchange only)
+
+  reference String? // external payment reference / tx hash
+  note      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("transactions")
+}
+
