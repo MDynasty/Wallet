@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import LandingPage    from './pages/LandingPage';
 import LoginPage      from './pages/LoginPage';
 import RegisterPage   from './pages/RegisterPage';
 import DashboardPage  from './pages/DashboardPage';
@@ -18,9 +19,10 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Routes>
-      <Route path="/login"    element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/" element={<RequireAuth><DashboardPage /></RequireAuth>} />
+      <Route path="/"          element={<LandingPage />} />
+      <Route path="/login"     element={<LoginPage />} />
+      <Route path="/register"  element={<RegisterPage />} />
+      <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
       <Route path="/accounts/new" element={<RequireAuth><NewAccountPage /></RequireAuth>} />
       <Route path="/transactions/send" element={<RequireAuth><SendPage /></RequireAuth>} />
       <Route path="/transactions/exchange" element={<RequireAuth><ExchangePage /></RequireAuth>} />

@@ -18,7 +18,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(email, password, firstName, lastName);
-      nav('/');
+      nav('/dashboard');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } }).response?.data?.error;
       setError(msg || 'Registration failed');

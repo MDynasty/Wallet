@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { accountsApi, transactionsApi } from '../api/client';
 import type { Account, Transaction } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
+  const nav = useNavigate();
   const [accounts, setAccounts]       = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading]         = useState(true);
@@ -29,7 +30,7 @@ export default function DashboardPage() {
         <div className="dash-user">
           <span>👤 {user?.firstName} {user?.lastName}</span>
           <Link to="/kyc" className="pill">KYC: {user?.kycStatus}</Link>
-          <button onClick={logout} className="btn-ghost">Sign out</button>
+          <button onClick={() => { logout(); nav('/'); }} className="btn-ghost">Sign out</button>
         </div>
       </header>
 
