@@ -1,0 +1,46 @@
+# Render deployment configuration for the Wallet backend.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Steps to deploy:
+#   1. Push this repo to GitHub.
+#   2. Go to https://dashboard.render.com → New → Blueprint.
+#   3. Connect your GitHub repo — Render will detect this file automatically.
+#   4. Set the JWT_SECRET env var to a long random string (≥ 64 chars).
+#   5. After the first deploy, copy the service URL (e.g. https://wallet-backend.onrender.com).
+#   6. Add that URL as the VITE_API_URL secret in your GitHub repo
+#      (Settings → Secrets and variables → Actions → New repository secret).
+#   7. Trigger the "Deploy Frontend to GitHub Pages" workflow.
+
+services:
+  - type: web
+    name: wallet-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: mkdir -p data && npm ci && npm run build && npx prisma generate && npx prisma migrate deploy
+    startCommand: node dist/index.js
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      # SQLite stored under the backend working directory.
+      # NOTE: Render's free tier does not have a persistent disk, so data
+      # is wiped on each redeploy. Upgrade to a paid plan + persistent disk
+      # (or switch to Render PostgreSQL) for durable storage.
+      - key: DATABASE_URL
+        value: file:./data/wallet.db
+      # Must match the GitHub Pages URL for your repo.
+      - key: CORS_ORIGIN
+        value: https://mdynasty.github.io
+      # Generate a strong secret: openssl rand -hex 64
+      - key: JWT_SECRET
+        sync: false   # mark as secret — you must fill this in the Render dashboard
+      - key: JWT_EXPIRES_IN
+        value: "7d"
+      - key: ETH_USD_RATE
+        value: "3000"
+      - key: EXCHANGE_FEE_PCT
+        value: "0.005"
+      - key: TRANSFER_FEE_PCT
+        value: "0.001"

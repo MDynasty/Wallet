@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: '' }); // proxied by Vite dev server
+// In production the VITE_API_URL env var points to the deployed backend.
+// In local dev it is empty so the Vite proxy handles all API calls.
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '' });
 
 // Attach stored JWT to every request
 api.interceptors.request.use((config) => {
