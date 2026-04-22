@@ -1,0 +1,46 @@
+name: "Copilot Setup Steps"
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # Must be named exactly `copilot-setup-steps` to be picked up by Copilot.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Create backend .env from example
+        working-directory: backend
+        run: |
+          cp .env.example .env
+          # Replace placeholder secret with a fixed dev-only value (no real secrets here)
+          sed -i 's/change_me_to_a_long_random_string_at_least_64_chars/copilot_dev_jwt_secret_key_for_local_development_only_abcdef1234567890/' .env
+
+      - name: Run database migrations
+        working-directory: backend
+        run: npx prisma migrate deploy
